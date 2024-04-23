@@ -34,6 +34,25 @@ func main() {
 	_, e := db.Exec(insertDynStmt, "Bench", 8, 8, 52.5)
 	CheckError(e)
 
+	// query
+	rows, err := db.Query(`SELECT * FROM exercises`)
+	CheckError(err)
+
+	defer rows.Close()
+	for rows.Next() {
+		var id int
+		var exercise string
+		var reps int
+		var sets int
+		var weight float64
+
+		err = rows.Scan(&id, &exercise, &reps, &sets, &weight)
+		CheckError(err)
+
+		fmt.Println(id, exercise, reps, sets, weight)
+	}
+	CheckError(err)
+
 	fmt.Println("Connected!")
 }
 
