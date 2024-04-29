@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	_ "github.com/lib/pq"
+	"net/http"
 )
 
 const (
@@ -13,6 +14,21 @@ const (
 	password = "postgres"
 	dbname   = "move"
 )
+
+func retrieveRecords(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "GET" {
+		http.Error(w, http.StatusText(405), http.StatusMethodNotAllowed)
+		return
+	}
+
+	rowRs, err := db.Query("SELECT * FROM exercises")
+
+	if err != nil {
+		http.Error(w, http.StatusText(500), http.StatusInternalServerError)
+		return
+	}
+	defer rowsRs.Close()
+}
 
 func main() {
 	// connection string
@@ -38,18 +54,25 @@ func main() {
 	rows, err := db.Query(`SELECT * FROM exercises`)
 	CheckError(err)
 
+	type exercise struct {
+		id       int
+		exercise string
+		reps     int
+		sets     int
+		weight   float64
+	}
+
+	var exercises []exercise
+
 	defer rows.Close()
 	for rows.Next() {
-		var id int
-		var exercise string
-		var reps int
-		var sets int
-		var weight float64
+		exercise := exercise{}
 
-		err = rows.Scan(&id, &exercise, &reps, &sets, &weight)
+		err = rows.Scan(&exercise.id, &exercise.exercise, &exercise.reps, &exercise.sets, &exercise.weight)
 		CheckError(err)
 
-		fmt.Println(id, exercise, reps, sets, weight)
+		fmt.Print(exercise)
+		exercises = append(exercises, exercise)
 	}
 	CheckError(err)
 
